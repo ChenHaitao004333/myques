@@ -221,6 +221,17 @@
             word-break: break-word;
         }
 
+        .question-hint {
+            display: inline-block;
+            font-size: 13px;
+            color: #667eea;
+            background: #f0f7ff;
+            border: 1px solid #dbeafe;
+            padding: 8px 12px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+
         .choices-list {
             display: flex;
             flex-direction: column;
@@ -633,6 +644,7 @@
         let currentIndex = 0;
         let userAnswers = [];
         let answered = false;
+        let selectedChoices = [];
 
         // ===================== 工具函数 =====================
         function shuffleArray(array) {
@@ -719,6 +731,7 @@
             const question = shuffledQuestions[currentIndex];
             const total = shuffledQuestions.length;
             const currentNum = currentIndex + 1;
+            const isMultiple = question.isMultipleChoice || question.correctAnswer.length > 1;
 
             // 更新进度
             document.getElementById('progressText').textContent = `${currentNum} / ${total}`;
@@ -740,6 +753,7 @@
                 <div class="question-card">
                     <div class="question-number">第 ${currentNum} 题 / 共 ${total} 题</div>
                     <div class="question-text">${escapeHtml(question.question)}</div>
+                    ${isMultiple ? '<div class="question-hint">多选题，请选择所有正确答案后再提交</div>' : ''}
                     <div class="choices-list">
                         ${choicesHtml}
                     </div>
@@ -748,11 +762,16 @@
                         <div class="explanation-title">💡 解析</div>
                         <div class="explanation-text">${escapeHtml(question.explanation)}</div>
                     </div>
-                    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+                    <button class="next-btn" id="actionBtn"></button>
                 </div>
             `;
 
             answered = false;
+            selectedChoices = [];
+
+            const actionBtn = document.getElementById('actionBtn');
+            actionBtn.textContent = isMultiple ? '提交答案' : '下一题 →';
+            actionBtn.onclick = isMultiple ? submitAnswer : nextQuestion;
         }
 
         // ===================== 选择答案 =====================
@@ -760,15 +779,45 @@
             if (answered) return;
 
             const question = shuffledQuestions[currentIndex];
-            const isCorrect = question.correctAnswer.includes(choiceId);
-            const correctId = question.correctAnswer[0];
+            const isMultiple = question.isMultipleChoice || question.correctAnswer.length > 1;
+
+            if (isMultiple) {
+                const selectedIndex = selectedChoices.indexOf(choiceId);
+                if (selectedIndex >= 0) {
+                    selectedChoices.splice(selectedIndex, 1);
+                } else {
+                    selectedChoices.push(choiceId);
+                }
+
+                const choiceElement = document.querySelector(`.choice-item[data-id="${choiceId}"]`);
+                if (choiceElement) {
+                    choiceElement.classList.toggle('selected');
+                }
+
+                const actionBtn = document.getElementById('actionBtn');
+                actionBtn.classList.toggle('show', selectedChoices.length > 0);
+            } else {
+                submitAnswer(choiceId);
+            }
+        }
+
+        function submitAnswer(singleChoiceId) {
+            if (answered) return;
+
+            const question = shuffledQuestions[currentIndex];
+            const isMultiple = question.isMultipleChoice || question.correctAnswer.length > 1;
+            const submittedChoices = isMultiple ? [...selectedChoices] : [singleChoiceId];
+            const selectedSet = new Set(submittedChoices);
+            const correctSet = new Set(question.correctAnswer);
+            const isCorrect = submittedChoices.length === question.correctAnswer.length && question.correctAnswer.every(id => selectedSet.has(id));
 
             answered = true;
 
             // 记录答案
             userAnswers.push({
                 question: question,
-                selected: choiceId,
+                selected: isMultiple ? submittedChoices : submittedChoices[0],
+                selectedChoices: submittedChoices,
                 isCorrect: isCorrect
             });
 
@@ -778,9 +827,9 @@
                 const id = choice.getAttribute('data-id');
                 choice.classList.add('disabled');
 
-                if (id === correctId) {
+                if (correctSet.has(id)) {
                     choice.classList.add('correct');
-                } else if (id === choiceId && !isCorrect) {
+                } else if (selectedSet.has(id) && !correctSet.has(id)) {
                     choice.classList.add('wrong');
                 }
             });
@@ -788,6 +837,7 @@
             // 显示结果和解析
             const explanationBox = document.getElementById('explanationBox');
             const resultBadge = document.getElementById('resultBadge');
+            const actionBtn = document.getElementById('actionBtn');
 
             if (isCorrect) {
                 resultBadge.innerHTML = '<div class="result-badge correct">✅ 回答正确</div>';
@@ -796,7 +846,9 @@
             }
 
             explanationBox.classList.add('show');
-            document.getElementById('nextBtn').classList.add('show');
+            actionBtn.textContent = '下一题 →';
+            actionBtn.onclick = nextQuestion;
+            actionBtn.classList.add('show');
         }
 
         // ===================== 下一题 =====================
@@ -830,17 +882,18 @@
 
             userAnswers.forEach((answer, idx) => {
                 const q = answer.question;
-                const correctId = q.correctAnswer[0];
+                const selectedSet = new Set(answer.selectedChoices || (Array.isArray(answer.selected) ? answer.selected : [answer.selected]));
+                const correctSet = new Set(q.correctAnswer);
 
                 let choicesHtml = '';
                 q.choices.forEach(choice => {
                     let cls = 'normal';
                     let marker = '';
 
-                    if (choice.id === correctId) {
+                    if (correctSet.has(choice.id)) {
                         cls = 'correct-answer';
                         marker = '✅ ';
-                    } else if (choice.id === answer.selected && !answer.isCorrect) {
+                    } else if (selectedSet.has(choice.id) && !correctSet.has(choice.id)) {
                         cls = 'wrong-answer';
                         marker = '❌ ';
                     }
@@ -887,6 +940,7 @@
             currentIndex = 0;
             userAnswers = [];
             answered = false;
+            selectedChoices = [];
         }
 
         // ===================== HTML转义 =====================

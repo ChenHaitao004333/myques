@@ -762,10 +762,11 @@
             // 渲染题目卡片
             const quizBody = document.getElementById('quizBody');
             let choicesHtml = '';
-            question.choices.forEach(choice => {
+            question.choices.forEach((choice, index) => {
+                const displayId = String.fromCharCode(65 + index);
                 choicesHtml += `
                     <div class="choice-item" data-id="${choice.id}" onclick="selectChoice('${choice.id}')">
-                        <div class="choice-id">${choice.id}</div>
+                        <div class="choice-id">${displayId}</div>
                         <div class="choice-text">${escapeHtml(choice.text)}</div>
                     </div>
                 `;
@@ -908,7 +909,8 @@
                 const correctSet = new Set(q.correctAnswer);
 
                 let choicesHtml = '';
-                q.choices.forEach(choice => {
+                q.choices.forEach((choice, index) => {
+                    const displayId = String.fromCharCode(65 + index);
                     let cls = 'normal';
                     let marker = '';
 
@@ -922,7 +924,7 @@
 
                     choicesHtml += `
                         <div class="result-choice ${cls}">
-                            <span class="choice-marker">${marker}${choice.id}.</span>
+                            <span class="choice-marker">${marker}${displayId}.</span>
                             <span>${escapeHtml(choice.text)}</span>
                         </div>
                     `;

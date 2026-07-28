@@ -718,13 +718,18 @@
                 dataSets.forEach(set => {
                     questions = questions.concat(set.data.questions.map(q => ({
                         ...q,
+                        choices: shuffleArray(q.choices),
                         _source: set.data.title
                     })));
                 });
                 title = setId === 'mock' ? '模拟练习题库' : '全部题目';
             } else {
                 const set = allDataSets.find(s => s.id === setId);
-                questions = set.data.questions.map(q => ({ ...q, _source: set.data.title }));
+                questions = set.data.questions.map(q => ({
+                    ...q,
+                    choices: shuffleArray(q.choices),
+                    _source: set.data.title
+                }));
                 title = set.data.title;
             }
 

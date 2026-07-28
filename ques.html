@@ -290,6 +290,19 @@
             flex-shrink: 0;
         }
 
+        .choice-original-id {
+            display: none;
+            font-size: 13px;
+            color: #888;
+            padding-top: 8px;
+            margin-left: -8px;
+            flex-shrink: 0;
+        }
+
+        .choice-item.disabled .choice-original-id {
+            display: block;
+        }
+
         .choice-item.selected .choice-id {
             background: #667eea;
             color: white;
@@ -767,6 +780,7 @@
                 choicesHtml += `
                     <div class="choice-item" data-id="${choice.id}" onclick="selectChoice('${choice.id}')">
                         <div class="choice-id">${displayId}</div>
+                        <div class="choice-original-id">（${choice.id}）</div>
                         <div class="choice-text">${escapeHtml(choice.text)}</div>
                     </div>
                 `;
@@ -780,12 +794,12 @@
                     <div class="choices-list">
                         ${choicesHtml}
                     </div>
+                    <button class="next-btn" id="actionBtn"></button>
                     <div class="explanation-box" id="explanationBox">
                         <div id="resultBadge"></div>
                         <div class="explanation-title">💡 解析</div>
                         <div class="explanation-text">${escapeHtml(question.explanation)}</div>
                     </div>
-                    <button class="next-btn" id="actionBtn"></button>
                 </div>
             `;
 
@@ -924,7 +938,7 @@
 
                     choicesHtml += `
                         <div class="result-choice ${cls}">
-                            <span class="choice-marker">${marker}${displayId}.</span>
+                            <span class="choice-marker">${marker}${displayId}.（${choice.id}）</span>
                             <span>${escapeHtml(choice.text)}</span>
                         </div>
                     `;

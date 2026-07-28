@@ -84,6 +84,7 @@
         .menu-card:nth-child(3)::before { background: #45B7D1; }
         .menu-card:nth-child(4)::before { background: #96CEB4; }
         .menu-card:nth-child(5)::before { background: #FFEAA7; }
+        .menu-card:nth-child(6)::before { background: #C4B5FD; }
 
         .menu-icon {
             width: 52px;
@@ -101,6 +102,7 @@
         .menu-card:nth-child(3) .menu-icon { background: #EBF5FB; }
         .menu-card:nth-child(4) .menu-icon { background: #F0FFF4; }
         .menu-card:nth-child(5) .menu-icon { background: #FFFBEB; }
+        .menu-card:nth-child(6) .menu-icon { background: #F5F3FF; }
 
         .menu-info {
             flex: 1;
@@ -638,6 +640,7 @@
             { id: '03', data: questionsData03, icon: '🔵' },
             { id: '04', data: questionsData04, icon: '🟡' }
         ];
+        const mockDataSets = allDataSets.filter(set => set.id === '03' || set.id === '04');
 
         let currentSet = null;
         let shuffledQuestions = [];
@@ -676,6 +679,19 @@
                 `;
             });
 
+            // 模拟练习题库
+            const mockCount = mockDataSets.reduce((sum, set) => sum + set.data.questions.length, 0);
+            html += `
+                <div class="menu-card" onclick="startQuiz('mock')">
+                    <div class="menu-icon">📝</div>
+                    <div class="menu-info">
+                        <div class="menu-title">模拟练习题库</div>
+                        <div class="menu-count">${mockCount} 道题目（试题 03 + 04）</div>
+                    </div>
+                    <div class="menu-arrow">›</div>
+                </div>
+            `;
+
             // 总和题库
             const totalCount = allDataSets.reduce((sum, s) => sum + s.data.questions.length, 0);
             html += `
@@ -697,14 +713,15 @@
             let questions = [];
             let title = '';
 
-            if (setId === 'all') {
-                allDataSets.forEach(set => {
+            if (setId === 'all' || setId === 'mock') {
+                const dataSets = setId === 'mock' ? mockDataSets : allDataSets;
+                dataSets.forEach(set => {
                     questions = questions.concat(set.data.questions.map(q => ({
                         ...q,
                         _source: set.data.title
                     })));
                 });
-                title = '全部题目';
+                title = setId === 'mock' ? '模拟练习题库' : '全部题目';
             } else {
                 const set = allDataSets.find(s => s.id === setId);
                 questions = set.data.questions.map(q => ({ ...q, _source: set.data.title }));
